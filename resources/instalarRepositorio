@@ -1,0 +1,9 @@
+
+mvn install:install-file -Dfile=/home/konecta/Mi-Mundo-Personal/USSD/smpp-ussd-rt-repo/1.0.0/smpp-ussd-rt-1.0.0.jar -DgroupId=py.com.personal.webvas -DartifactId=smpp-ussd-rt -Dversion=1.0.0 -Dpackaging=jar
+
+mvn install:install-file -Dfile=/home/konecta/Mi-Mundo-Personal/USSD/x2jb-2.0-bin-dist/lib/x2jb-core.jar -DgroupId=org.x2jb -DartifactId=x2jb-core -Dversion=2.0 -Dpackaging=jar
+
+mvn install:install-file -Dfile=/home/konecta/Mi-Mundo-Personal/USSD/x2jb-2.0-bin-dist/lib/x2jb-annotation-provider.jar -DgroupId=org.x2jb -DartifactId=x2jb-annotation-provider -Dversion=2.0 -Dpackaging=jar
+
+mvn install:install-file -Dfile=/home/konecta/Mi-Mundo-Personal/USSD/x2jb-2.0-bin-dist/lib/x2jb-default-handlers.jar -DgroupId=org.x2jb -DartifactId=x2jb-default-handlers -Dversion=2.0 -Dpackaging=jar
+
