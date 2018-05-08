@@ -12,6 +12,7 @@ import py.com.personal.webvas.controller.Saldos;
 import py.com.personal.webvas.controller.Servicios;
 import py.com.personal.webvas.controller.Telefono;
 import py.com.personal.webvas.data.ApiAccess;
+import py.com.personal.webvas.data.ApiRestAccess;
 import py.com.personal.webvas.mimundoussd.MiMundo;
 import py.com.personal.webvas.mimundoussd.MiMundoConfiguration;
 import py.com.personal.webvas.smppcs.ussd.AbstractUssdSession;
@@ -28,6 +29,7 @@ public class USSDSession extends AbstractUssdSession {
     }
 
     private ApiAccess wsMiMundo = null;
+    private ApiRestAccess apiRest = null;
 
     @Override
     protected void runSession() {
@@ -56,6 +58,7 @@ public class USSDSession extends AbstractUssdSession {
 
         try {
             wsMiMundo = new ApiAccess();
+            apiRest = new ApiRestAccess();
             nombre = wsMiMundo.misDatos(msisdnSesion);
         } catch (Exception e) {
             System.err.println("Error al consultar API : " + e.getMessage());
@@ -88,7 +91,7 @@ public class USSDSession extends AbstractUssdSession {
              */
             if (opcion == 1) {
                 // MiLinea.
-                MiLinea myLinea = new MiLinea(this, msisdnSesion, wsMiMundo);
+                MiLinea myLinea = new MiLinea(this, msisdnSesion, wsMiMundo, apiRest);
                 myLinea.procesar(mensajeIn);
                 
             } else if (opcion == 2) {

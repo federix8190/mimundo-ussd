@@ -8,4 +8,5 @@ public class Constantes {
     public static final String URL_MI_MUNDO_API = "10.150.16.123";
     public static final int PORT_MI_MUNDO_API = 8080;
     public static final String BASE_PATH_MI_MUNDO_API = "/mundo/v1/";
+    public static final String BASE_PATH_OAUTH_API = "/oauth2/v1/";
 }

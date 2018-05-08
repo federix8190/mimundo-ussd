@@ -154,7 +154,8 @@
                 </executions>
                 <configuration>
                     <mainClass>py.com.personal.webvas.mimundoussd.MiMundo</mainClass>
-                    <arguments>595971365910</arguments>
+                    <arguments>595971876603</arguments>
+                    <!--<arguments>595971365910</arguments>-->
                 </configuration>
             </plugin>
         </plugins>

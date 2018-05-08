@@ -1,8 +1,10 @@
 package py.com.personal.webvas.controller;
 
 import com.microsoft.schemas._2003._10.serialization.arrays.ArrayOfstring;
+import java.util.List;
 
 import py.com.personal.webvas.data.ApiAccess;
+import py.com.personal.webvas.data.ApiRestAccess;
 import py.com.personal.webvas.mimundoussd.MiMundoConfiguration;
 import py.com.personal.webvas.smppcs.ussd.AbstractUssdSession.MessageType;
 import py.com.personal.webvas.smppcs.ussd.UssdExeption;
@@ -12,13 +14,15 @@ import py.com.personal.webvas.utils.MyEnum.OpType;
 public class MiLinea {
 
     private ApiAccess api = null;
+    private ApiRestAccess api2 = null;
     private String msisdn = "";
     private USSDSession miSesion = null;
 
-    public MiLinea(USSDSession mySesion, String msisdn, ApiAccess apiWs) {
+    public MiLinea(USSDSession mySesion, String msisdn, ApiAccess ws, ApiRestAccess apiWs2) {
         this.miSesion = mySesion;
         this.msisdn = msisdn;
-        this.api = apiWs;
+        this.api = ws;
+        this.api2 = apiWs2;
     }
 
     // Logica de opcion Mi Linea.
@@ -41,7 +45,7 @@ public class MiLinea {
         if (opcionMiLinea == 1) {
             // Facturas
             try {
-                respuesta = api.misFacturas(msisdn);
+                respuesta = api2.misFacturas(msisdn);
                 enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
                         "MisFacturas", api.getTimeStamp(), null);
 
@@ -53,11 +57,13 @@ public class MiLinea {
             return;
 
         } else if (opcionMiLinea == 2) {
+            
             // Ultimas 3 Facturas.
-            ArrayOfstring resp = null;
+            // ArrayOfstring res = null;
+            List<String> resp = null;
 
             try {
-                resp = api.ultimas3Facturas(msisdn);
+                resp = api2.ultimas3Facturas(msisdn);
             } catch (Exception e) {
                 enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
                         MiMundoConfiguration.instance._msjError,
@@ -66,25 +72,25 @@ public class MiLinea {
                 return;
             }
 
-            if (resp.getString().size() != 0) {
-                for (int i = 0; i < resp.getString().size(); i++) {
+            if (resp.size() != 0) {
+                for (int i = 0; i < resp.size(); i++) {
 
-                    respuesta = resp.getString().get(i);
+                    respuesta = resp.get(i);
+                    
+                    System.err.println("respuesta : " + respuesta);
 
                     this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
                             msjMiLinea, respuesta, "Mis3facturas",
                             api.getTimeStamp(), null);
 
-                    if (resp.getString().size() != 1
-                            && i < (resp.getString().size() - 1)) {
+                    if (resp.size() != 1 && i < (resp.size() - 1)) {
 
                         respuesta = respuesta + "\n0- Ver mas.";
-
                         this.miSesion.ResponseMsj(MessageType.CONTINUE,
                                 respuesta, true);
+                        
                     } else {
-                        this.miSesion.ResponseMsj(MessageType.LAST, respuesta,
-                                true);
+                        this.miSesion.ResponseMsj(MessageType.LAST, respuesta, true);
                         return;
                     }
 
@@ -94,13 +100,14 @@ public class MiLinea {
                         continue;
                     }
                 }
+                
             } else {
                 respuesta = MiMundoConfiguration.instance._msjError;
                 enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
                         "Mis3Facturas", api.getTimeStamp(), null);
-
                 return;
             }
+            
         } else if (opcionMiLinea == 3) {
             // Club
             respuesta = MiMundoConfiguration.instance._menuClub;
