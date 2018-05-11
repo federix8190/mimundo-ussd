@@ -7,6 +7,7 @@ import java.util.TimeZone;
 import org.datacontract.schemas._2004._07.mimundoussd.ServicioAdicional;
 
 import py.com.personal.webvas.data.ApiAccess;
+import py.com.personal.webvas.data.ApiRestAccess;
 import py.com.personal.webvas.mimundoussd.MiMundoConfiguration;
 import py.com.personal.webvas.smppcs.ussd.UssdExeption;
 import py.com.personal.webvas.smppcs.ussd.AbstractUssdSession.MessageType;
@@ -19,11 +20,13 @@ public class Recarga {
     private USSDSession miSesion = null;
 
     private ApiAccess api = null;
+    private ApiRestAccess api2 = null;
 
-    public Recarga(USSDSession mySesion, String msisdn, ApiAccess apiWs) {
+    public Recarga(USSDSession mySesion, String msisdn, ApiAccess apiWs, ApiRestAccess apiRest) {
         this.miSesion = mySesion;
         this.msisdn = msisdn;
         this.api = apiWs;
+        this.api2 = apiRest;
     }
 
     // Logica de opcion recarga.

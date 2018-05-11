@@ -32,12 +32,17 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
+import py.com.personal.webvas.mimundoussd.MiMundoConfiguration;
+import py.com.personal.webvas.utils.Constantes;
 
 import static py.com.personal.webvas.utils.Constantes.BASE_PATH_MI_MUNDO_API;
 import static py.com.personal.webvas.utils.Constantes.BASE_PATH_OAUTH_API;
+import static py.com.personal.webvas.utils.Constantes.CLIENT_ID_SERVICE1;
+import static py.com.personal.webvas.utils.Constantes.PASSWORD_SERVICE1;
 import static py.com.personal.webvas.utils.Constantes.PORT_MI_MUNDO_API;
 import static py.com.personal.webvas.utils.Constantes.URL_MI_MUNDO_API;
 import static py.com.personal.webvas.utils.StringUtils.formatFecha;
+import static py.com.personal.webvas.utils.StringUtils.formatLineaMiMundoApi;
 import static py.com.personal.webvas.utils.StringUtils.formatMonto;
 
 public class ApiRestAccess {
@@ -55,16 +60,61 @@ public class ApiRestAccess {
         _tiemStamp = valor;
     }
     
+    public String misDatos(String Msisdn) {
+        
+        // Obtener codigo de cliente de la linea
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        long startTime = System.currentTimeMillis();
+        String token = getToken();
+        String url = "lineas/" + Msisdn;
+        JSONObject datosLinea = getDatos(url, token);
+        Long codigoCliente = getLong(datosLinea, "codigoCliente");
+        
+        // Obtener datos del cliente
+        url = "clientes/" + codigoCliente;
+        JSONObject datosCliente = getDatos(url, token);
+        String nombre = getString(datosCliente, "nombre");
+        String apellido = getString(datosCliente, "apellido");
+        setTimeStamp(System.currentTimeMillis() - startTime);
+        
+        if (!nombre.equals("")) {
+            nombre = nombre + " " + apellido;
+        }
+        return nombre;
+    }
+    
+    public String facturasPendientes(String Msisdn) {
+        
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        long startTime = System.currentTimeMillis();
+        String token = getToken();
+        String url = "lineas/" + Msisdn;
+        JSONObject datosLinea = getDatos(url, token);
+        String codigoGrupo = getString(datosLinea, "grupoFacturacion");
+        url = "grupos-facturacion/" + codigoGrupo + "/facturas?registros=-1&estado=VIGENTE";
+        JSONObject facturas = getDatos(url, token);
+        setTimeStamp(System.currentTimeMillis() - startTime);
+        
+        JSONArray facturasVigentes = getLista(facturas);
+        if (facturasVigentes.isEmpty()) {
+            return MiMundoConfiguration.instance._msjSinFactura;
+        } else {
+            JSONObject datosFactura = getItemLista(facturas, 0);
+            String facturaStr = getDatosFactura(datosFactura);
+            return facturaStr;
+        }
+    }
+    
     public String misFacturas(String Msisdn) {
         
+        Msisdn = formatLineaMiMundoApi(Msisdn);
         long startTime = System.currentTimeMillis();
-        
-        JSONObject grupos = getDatos("grupos-facturacion/");
-        JSONObject grupo = getItemLista(grupos, 0);
-        String codigoGrupo = getString(grupo, "codigo");
-        
-        String url = "grupos-facturacion/" + codigoGrupo + "/facturas";
-        JSONObject facturas = getDatos(url);
+        String token = getToken();
+        String url = "lineas/" + Msisdn;
+        JSONObject datosLinea = getDatos(url, token);
+        String codigoGrupo = getString(datosLinea, "grupoFacturacion");
+        url = "grupos-facturacion/" + codigoGrupo + "/facturas";
+        JSONObject facturas = getDatos(url, token);
         JSONObject datosFactura = getItemLista(facturas, 0);
         String facturaStr = getDatosFactura(datosFactura); 
         setTimeStamp(System.currentTimeMillis() - startTime);
@@ -73,23 +123,49 @@ public class ApiRestAccess {
     
     public List<String> ultimas3Facturas(String Msisdn) {
         
+        Msisdn = formatLineaMiMundoApi(Msisdn);
         List<String> resp = new ArrayList<>();
         long startTime = System.currentTimeMillis();
-        
-        JSONObject grupos = getDatos("grupos-facturacion/");
-        JSONObject grupo = getItemLista(grupos, 0);
-        String codigoGrupo = getString(grupo, "codigo");
-        
-        String url = "grupos-facturacion/" + codigoGrupo + "/facturas";
-        JSONObject facturas = getDatos(url);
+        String token = getToken();
+        String url = "lineas/" + Msisdn;
+        JSONObject datosLinea = getDatos(url, token);
+        String codigoGrupo = getString(datosLinea, "grupoFacturacion");
+        url = "grupos-facturacion/" + codigoGrupo + "/facturas";
+        JSONObject facturas = getDatos(url, token);
+        setTimeStamp(System.currentTimeMillis() - startTime);
         JSONArray listaFacturas = getLista(facturas);
         for (int i = 0; i < 3; i++) {
             JSONObject item = (JSONObject) listaFacturas.get(i);
             resp.add(getDatosFactura(item));
         }
-        
-        setTimeStamp(System.currentTimeMillis() - startTime);
         return resp;
+    }
+    
+    public String obtenerPuntos(String Msisdn) {
+        
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        long startTime = System.currentTimeMillis();
+        String token = getToken();
+        String url = "clubpersonal/total-puntos?linea=" + Msisdn;
+        JSONObject datos = getDatos(url, token);
+        setTimeStamp(System.currentTimeMillis() - startTime);
+        Long puntos = getLong(datos, "total");
+        String res = "Tenes: " + puntos + " puntos para canjear.";
+        return res;
+        
+    }
+    
+    public String asociarClub(String Msisdn) {
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        long startTime = System.currentTimeMillis();
+        String token = getToken();
+        String url = "clubpersonal/usuarios?linea=" + Msisdn;
+        JSONObject datos = post(url, token, "");
+        System.err.println("\n\nDatos : " + datos + "\n\n");
+        setTimeStamp(System.currentTimeMillis() - startTime);
+        Long puntos = getLong(datos, "total");
+        //String res = "Tenes: " + puntos + " puntos para canjear.";
+        return datos.toString();
     }
     
     private String getDatosFactura(JSONObject item) {
@@ -140,8 +216,16 @@ public class ApiRestAccess {
         }
         return "";
     }
+    
+    private Long getLong(JSONObject data, String atributo) {
+        
+        if (data != null && data.containsKey(atributo)) {
+            return (Long) data.get(atributo);
+        }
+        return 0L;
+    }
 
-    private JSONObject getDatos(String url) { //throws IOException {
+    private JSONObject getDatos(String url, String token) {
         
         InputStream is = null;
                 
@@ -153,7 +237,49 @@ public class ApiRestAccess {
             
             HttpEntityEnclosingRequest request;
             request = new BasicHttpEntityEnclosingRequest("GET", urlServicio);
-            request.setHeader("Authorization", getToken());
+            request.setHeader("Authorization", token);
+            request.setHeader("client_id", CLIENT_ID_SERVICE1);
+            
+            HttpResponse res = client.execute(host, request);
+            HttpEntity entityResponse = res.getEntity();
+            is = entityResponse.getContent();
+            StringWriter writer = new StringWriter();
+            IOUtils.copy(is, writer);
+            String str = writer.toString();
+            
+            JSONParser parser = new JSONParser();
+            JSONObject obj = (JSONObject) parser.parse(str);
+            
+            return obj;
+            
+        } catch (Exception e) {
+            System.out.println("Ocurrio un error : " + e.getMessage());
+            return null;
+        } finally {
+            try {
+                if (is != null) is.close(); 
+            } catch (Exception e) {
+                System.out.println("Error al cerrar InputStream : " + e.getMessage());
+            }
+        }
+    }
+    
+    private JSONObject post(String url, String token, String json) {
+        
+        InputStream is = null;
+                
+        try {
+            
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpHost host = new HttpHost(URL_MI_MUNDO_API, PORT_MI_MUNDO_API);
+            String urlServicio = BASE_PATH_MI_MUNDO_API + url;
+            
+            StringEntity requestEntity = new StringEntity(json);
+            HttpEntityEnclosingRequest request;
+            request = new BasicHttpEntityEnclosingRequest("POST", urlServicio);
+            request.setHeader("Authorization", token);
+            request.setHeader("client_id", CLIENT_ID_SERVICE1);
+            request.setEntity(requestEntity);
             
             HttpResponse res = client.execute(host, request);
             HttpEntity entityResponse = res.getEntity();
@@ -185,43 +311,21 @@ public class ApiRestAccess {
                 
         try {
             
-            /*HttpClient client = HttpClientBuilder.create().build();
-            HttpHost host = new HttpHost(URL_MI_MUNDO_API, PORT_MI_MUNDO_API);*/
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpHost host = new HttpHost(URL_MI_MUNDO_API, PORT_MI_MUNDO_API);
             String urlServicio = BASE_PATH_OAUTH_API + "auth/token";
             
-            CloseableHttpClient client = HttpClients.createDefault();
-            HttpPost httpPost = new HttpPost(urlServicio);
             List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("grant_type", "implicit"));
-            params.add(new BasicNameValuePair("client_id", "jjNFjjATyNY="));
-            params.add(new BasicNameValuePair("user", "971876603"));
-            params.add(new BasicNameValuePair("response_type", "token"));
-            params.add(new BasicNameValuePair("password", "test"));
-            httpPost.setEntity(new UrlEncodedFormEntity(params));
+            params.add(new BasicNameValuePair("grant_type", "service1"));
+            params.add(new BasicNameValuePair("client_id", CLIENT_ID_SERVICE1));
+            params.add(new BasicNameValuePair("password", PASSWORD_SERVICE1));
             
-            System.err.println("Probando getToken : " + client);
-            
-            /*HttpEntityEnclosingRequest request;
+            HttpEntityEnclosingRequest request;
             request = new BasicHttpEntityEnclosingRequest("POST", urlServicio);
-            request.setHeader("Content-Type", "application/x-www-form-urlencoded");
-            HttpEntity datos = new BasicHttpEntity();
-            datos.
-            request.setEntity(datos);
+            request.setEntity(new UrlEncodedFormEntity(params));
             
             HttpResponse res = client.execute(host, request);
             HttpEntity entityResponse = res.getEntity();
-            is = entityResponse.getContent();
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(is, writer);
-            String str = writer.toString();*/
-            
-            CloseableHttpResponse response = client.execute(httpPost);
-            client.close();
-            
-            System.err.println("Peticion hecha...");
-            
-            /*HttpEntity entityResponse = response.getEntity();
-            System.err.println("Response : " + entityResponse);
             is = entityResponse.getContent();
             StringWriter writer = new StringWriter();
             IOUtils.copy(is, writer);
@@ -232,9 +336,8 @@ public class ApiRestAccess {
             
             if (obj.containsKey("access_token")) {
                 String token = (String) obj.get("access_token");
-                System.err.println("Token : " + token);
                 return token;
-            }*/
+            }
             
         } catch (Exception e) {
             System.out.println("Ocurrio un error al obtener el token : " + e.getMessage());

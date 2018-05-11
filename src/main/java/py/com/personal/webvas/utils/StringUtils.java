@@ -19,4 +19,11 @@ public class StringUtils {
         return sdf.format(fecha);
     }
     
+    public static String formatLineaMiMundoApi(String linea) {
+        if (linea.length() == 12) {
+            linea = linea.substring(3);
+        }
+        return linea;
+    }
+    
 }

@@ -59,7 +59,7 @@ public class USSDSession extends AbstractUssdSession {
         try {
             wsMiMundo = new ApiAccess();
             apiRest = new ApiRestAccess();
-            nombre = wsMiMundo.misDatos(msisdnSesion);
+            nombre = apiRest.misDatos(msisdnSesion);
         } catch (Exception e) {
             System.err.println("Error al consultar API : " + e.getMessage());
             this.AddLog(msisdnSesion, OpType.APP_ERROR, e.getMessage(),
@@ -82,45 +82,43 @@ public class USSDSession extends AbstractUssdSession {
         String mensajeIn = receive();
 
         int opcion = Integer.parseInt(mensajeIn);
-        if (opcion > 0 && opcion < 6) { // Se va recorriendo las opciones.
-            /*
-			 * if (opcion == 2) { // Multiplicate.
-			 * 
-			 * 
-			 * } else
-             */
-            if (opcion == 1) {
-                // MiLinea.
-                MiLinea myLinea = new MiLinea(this, msisdnSesion, wsMiMundo, apiRest);
-                myLinea.procesar(mensajeIn);
-                
-            } else if (opcion == 2) {
-                // Saldos
-                Saldos saldos = new Saldos(this, msisdnSesion, wsMiMundo);
-                saldos.procesar(mensajeIn);
-
-            } else if (opcion == 3) {
-                // Recarga.
-                Recarga recarga = new Recarga(this, msisdnSesion, wsMiMundo);
-                recarga.procesar(mensajeIn);
-
-            } else if (opcion == 4) {
-                // Servicios.
-                Servicios servicios = new Servicios(this, msisdnSesion,
-                        wsMiMundo);
-                servicios.procesar(mensajeIn);
-
-            } else if (opcion == 5) {
-                // Telefono.
-                Telefono telefono = new Telefono(this, msisdnSesion, wsMiMundo);
-                telefono.procesar(mensajeIn);
+        if (opcion > 0 && opcion < 6) {
+            
+            switch (opcion) {
+                case 1:
+                    // MiLinea.
+                    MiLinea myLinea = new MiLinea(this, msisdnSesion, wsMiMundo, apiRest);
+                    myLinea.procesar(mensajeIn);
+                    break;
+                case 2:
+                    // Saldos
+                    Saldos saldos = new Saldos(this, msisdnSesion, wsMiMundo, apiRest);
+                    saldos.procesar(mensajeIn);
+                    break;
+                case 3:
+                    // Recarga.
+                    Recarga recarga = new Recarga(this, msisdnSesion, wsMiMundo, apiRest);
+                    recarga.procesar(mensajeIn);
+                    break;
+                case 4:
+                    // Servicios.
+                    Servicios servicios = new Servicios(this, msisdnSesion, wsMiMundo);
+                    servicios.procesar(mensajeIn);
+                    break;
+                case 5:
+                    // Telefono.
+                    Telefono telefono = new Telefono(this, msisdnSesion, wsMiMundo);
+                    telefono.procesar(mensajeIn);
+                    break;
+                default:
+                    break;
             }
+            
         } else {
             AddLog(this.msisdn, OpType.INFORMACION, mensajeIn.toString(),
                     respuesta, "", null, null);
 
-            send(MessageType.LAST,
-                    MiMundoConfiguration.instance._msjParamIncorrecto);
+            send(MessageType.LAST, MiMundoConfiguration.instance._msjParamIncorrecto);
         }
     }
 

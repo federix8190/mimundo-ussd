@@ -1,6 +1,7 @@
 package py.com.personal.webvas.controller;
 
 import py.com.personal.webvas.data.ApiAccess;
+import py.com.personal.webvas.data.ApiRestAccess;
 import py.com.personal.webvas.mimundoussd.MiMundoConfiguration;
 import py.com.personal.webvas.smppcs.ussd.UssdExeption;
 import py.com.personal.webvas.smppcs.ussd.AbstractUssdSession.MessageType;
@@ -18,11 +19,13 @@ public class Saldos {
 
     // Instancia del WebService.
     private ApiAccess api = null;
+    private ApiRestAccess api2 = null;
 
-    public Saldos(USSDSession mySesion, String msisdn, ApiAccess apiWs) {
+    public Saldos(USSDSession mySesion, String msisdn, ApiAccess apiWs, ApiRestAccess apiWs2) {
         this.miSesion = mySesion;
         this.msisdn = msisdn;
         this.api = apiWs;
+        this.api2 = apiWs2;
     }
 
     public void procesar(String mensajeIn) throws InterruptedException,

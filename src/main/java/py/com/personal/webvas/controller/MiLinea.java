@@ -42,229 +42,221 @@ public class MiLinea {
         String msjMiLinea = this.miSesion.receive();
 
         int opcionMiLinea = Integer.parseInt(msjMiLinea);
-        if (opcionMiLinea == 1) {
-            // Facturas
-            try {
-                respuesta = api2.misFacturas(msisdn);
-                enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
-                        "MisFacturas", api.getTimeStamp(), null);
-
-            } catch (Exception e) {
-                enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
-                        MiMundoConfiguration.instance._msjError, "MisFacturas",
-                        api.getTimeStamp(), null);
-            }
-            return;
-
-        } else if (opcionMiLinea == 2) {
+        
+        switch (opcionMiLinea) {
             
-            // Ultimas 3 Facturas.
-            // ArrayOfstring res = null;
-            List<String> resp = null;
-
-            try {
-                resp = api2.ultimas3Facturas(msisdn);
-            } catch (Exception e) {
-                enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
-                        MiMundoConfiguration.instance._msjError,
-                        "Ultimas3Facturas", api.getTimeStamp(), null);
-
-                return;
-            }
-
-            if (resp.size() != 0) {
-                for (int i = 0; i < resp.size(); i++) {
-
-                    respuesta = resp.get(i);
-                    
-                    System.err.println("respuesta : " + respuesta);
-
-                    this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
-                            msjMiLinea, respuesta, "Mis3facturas",
+            case 1:
+                // Factura Pendiente
+                try {
+                    respuesta = api2.facturasPendientes(msisdn);
+                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
+                            "MisFacturas", api.getTimeStamp(), null);
+                } catch (Exception e) {
+                    enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
+                            MiMundoConfiguration.instance._msjError, "MisFacturas",
                             api.getTimeStamp(), null);
-
-                    if (resp.size() != 1 && i < (resp.size() - 1)) {
-
-                        respuesta = respuesta + "\n0- Ver mas.";
-                        this.miSesion.ResponseMsj(MessageType.CONTINUE,
-                                respuesta, true);
-                        
-                    } else {
-                        this.miSesion.ResponseMsj(MessageType.LAST, respuesta, true);
-                        return;
-                    }
-
-                    // Se espera la respuesta para continuar el paginado.
-                    msjMiLinea = this.miSesion.receive();
-                    if (!msjMiLinea.equals("")) {
-                        continue;
-                    }
+                }
+                return;
+                
+            case 2:
+                // Ultimas 3 Facturas.
+                // ArrayOfstring res = null;
+                List<String> resp = null;
+                try {
+                    resp = api2.ultimas3Facturas(msisdn);
+                } catch (Exception e) {
+                    enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
+                            MiMundoConfiguration.instance._msjError,
+                            "Ultimas3Facturas", api.getTimeStamp(), null);
+                    return;
                 }
                 
-            } else {
-                respuesta = MiMundoConfiguration.instance._msjError;
-                enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
-                        "Mis3Facturas", api.getTimeStamp(), null);
-                return;
-            }
-            
-        } else if (opcionMiLinea == 3) {
-            // Club
-            respuesta = MiMundoConfiguration.instance._menuClub;
-            this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
-
-            this.miSesion.AddLog(this.msisdn, OpType.INFORMACION, msjMiLinea,
-                    respuesta, "Club", null, null);
-
-            msjMiLinea = this.miSesion.receive();
-
-            int opcionClub = Integer.parseInt(msjMiLinea);
-
-            if (opcionClub == 1) {
-
-                try {
-                    respuesta = api.asociarClub(msisdn);
-                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
-                            respuesta, "AsociarClub", api.getTimeStamp(), null);
-                } catch (Exception e) {
-                    enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
-                            MiMundoConfiguration.instance._msjError,
-                            "AsociarClub", api.getTimeStamp(), null);
-                }
-                return;
-
-            } else if (opcionClub == 2) {
-                respuesta = MiMundoConfiguration.instance._menuClubPuntos;
-                this.miSesion
-                        .ResponseMsj(MessageType.CONTINUE, respuesta, true);
-
-                this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
-                        msjMiLinea, respuesta, "ObtenerPuntos",
-                        api.getTimeStamp(), null);
-
-                String opcionOtenerPuntos = this.miSesion.receive();
-
-                if (opcionOtenerPuntos.equals("1")) {
-                    try {
-                        respuesta = api.obtenerPuntos(msisdn);
-                    } catch (Exception e) {
-                        respuesta = MiMundoConfiguration.instance._msjError;
+                if (resp != null && !resp.isEmpty()) {
+                    for (int i = 0; i < resp.size(); i++) {
+                        respuesta = resp.get(i);
+                        this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
+                                msjMiLinea, respuesta, "Mis3facturas",
+                                api.getTimeStamp(), null);
+                        
+                        if (resp.size() != 1 && i < (resp.size() - 1)) {
+                            respuesta = respuesta + "\n0- Ver mas.";
+                            this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
+                        } else {
+                            this.miSesion.ResponseMsj(MessageType.LAST, respuesta, true);
+                            return;
+                        }
+                        // Se espera la respuesta para continuar el paginado.
+                        msjMiLinea = this.miSesion.receive();
+                        if (!msjMiLinea.equals("")) {
+                            continue;
+                        }
                     }
-                } else if (opcionOtenerPuntos.equals("2")) {
-                    try {
-                        respuesta = api.obtenerPuntosPorVencer(this.msisdn);
-                    } catch (Exception e) {
-                        respuesta = MiMundoConfiguration.instance._msjError;
-                    }
+                    
                 } else {
-                    respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
-                }
-
-                enviarRespuestaFinal(OpType.INFORMACION, opcionOtenerPuntos,
-                        respuesta, "ObtenerPuntos", api.getTimeStamp(), null);
-
-                return;
-
-            } else if (opcionClub == 3) {
-                try {
-                    respuesta = api.canjearClub(msisdn).substring(0, 150);
-                    this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
-                            msjMiLinea, respuesta, "CanjearClub",
-                            api.getTimeStamp(), null);
-
-                    enviarRespuestaFinal(OpType.INFORMACION, "", respuesta,
-                            "CanjearClub", api.getTimeStamp(), null);
-
-                    return;
-
-                } catch (Exception e) {
                     respuesta = MiMundoConfiguration.instance._msjError;
-                    this.miSesion.AddLog(this.msisdn, OpType.APP_ERROR,
-                            e.getMessage(), respuesta, "CanjearClub",
-                            api.getTimeStamp(), null);
-                }
-            } else {
-                respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
-                enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
-                        "Club", api.getTimeStamp(), null);
-
-                return;
-            }
-        } else {
-            // Clave Personal.
-            respuesta = MiMundoConfiguration.instance._menuClave;
-            this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
-
-            this.miSesion.AddLog(this.msisdn, OpType.INFORMACION, msjMiLinea,
-                    respuesta, "ClavePersonal", null, null);
-
-            msjMiLinea = this.miSesion.receive();
-
-            int opcionClave = Integer.parseInt(msjMiLinea);
-            if (opcionClave == 1) {
-                try {
-                    respuesta = api.obtenerEstadoUsuario(msisdn);
-                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
-                            respuesta, "ObtenerEstadoUsuario",
-                            api.getTimeStamp(), null);
-
-                } catch (Exception e) {
-                    enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
-                            MiMundoConfiguration.instance._msjError,
-                            "obtenerEstadoUsuario", api.getTimeStamp(), null);
-                }
-                return;
-
-            } else if (opcionClave == 2) {
-                respuesta = "Ingrese nueva clave:";
-
-                this.miSesion
-                        .ResponseMsj(MessageType.CONTINUE, respuesta, true);
-
-                this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
-                        msjMiLinea, respuesta, "ClavePersonal",
-                        api.getTimeStamp(), null);
-
-                String nuevaClave = this.miSesion.receive();
-
-                if (nuevaClave.equals("")) {
-                    respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
-                } else {
+                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
+                            "Mis3Facturas", api.getTimeStamp(), null);
+                    return;
+                }   
+                break;
+                
+            case 3:
+                // Club
+                respuesta = MiMundoConfiguration.instance._menuClub;
+                this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
+                
+                this.miSesion.AddLog(this.msisdn, OpType.INFORMACION, msjMiLinea,
+                        respuesta, "Club", null, null);
+                
+                msjMiLinea = this.miSesion.receive();
+                
+                int opcionClub = Integer.parseInt(msjMiLinea);
+                
+                if (opcionClub == 1) {
+                    
                     try {
-                        respuesta = api.cambiarClave(msisdn, nuevaClave);
+                        respuesta = api.asociarClub(msisdn);
+                        enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
+                                respuesta, "AsociarClub", api.getTimeStamp(), null);
+                    } catch (Exception e) {
+                        enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
+                                MiMundoConfiguration.instance._msjError,
+                                "AsociarClub", api.getTimeStamp(), null);
+                    }
+                    return;
+                    
+                } else if (opcionClub == 2) {
+                    respuesta = MiMundoConfiguration.instance._menuClubPuntos;
+                    this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
+                    
+                    this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
+                            msjMiLinea, respuesta, "ObtenerPuntos",
+                            api.getTimeStamp(), null);
+                    
+                    String opcionOtenerPuntos = this.miSesion.receive();
+                    
+                    if (opcionOtenerPuntos.equals("1")) {
+                        try {
+                            respuesta = api2.obtenerPuntos(msisdn);
+                        } catch (Exception e) {
+                            respuesta = MiMundoConfiguration.instance._msjError;
+                        }
+                    } else if (opcionOtenerPuntos.equals("2")) {
+                        try {
+                            respuesta = api.obtenerPuntosPorVencer(this.msisdn);
+                        } catch (Exception e) {
+                            respuesta = MiMundoConfiguration.instance._msjError;
+                        }
+                    } else {
+                        respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
+                    }
+                    
+                    enviarRespuestaFinal(OpType.INFORMACION, opcionOtenerPuntos,
+                            respuesta, "ObtenerPuntos", api.getTimeStamp(), null);
+                    
+                    return;
+                    
+                } else if (opcionClub == 3) {
+                    try {
+                        respuesta = api.canjearClub(msisdn).substring(0, 150);
+                        this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
+                                msjMiLinea, respuesta, "CanjearClub",
+                                api.getTimeStamp(), null);
+                        
+                        enviarRespuestaFinal(OpType.INFORMACION, "", respuesta,
+                                "CanjearClub", api.getTimeStamp(), null);
+                        
+                        return;
+                        
                     } catch (Exception e) {
                         respuesta = MiMundoConfiguration.instance._msjError;
+                        this.miSesion.AddLog(this.msisdn, OpType.APP_ERROR,
+                                e.getMessage(), respuesta, "CanjearClub",
+                                api.getTimeStamp(), null);
                     }
-                }
-                enviarRespuestaFinal(OpType.INFORMACION, nuevaClave, respuesta,
-                        "NuevaClave", api.getTimeStamp(), null);
-
-                return;
-            } else if (opcionClave == 3) {
-                try {
-                    respuesta = api.desbloquearClave(msisdn);
-                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
-                            respuesta, "DesbloquearClave", api.getTimeStamp(),
-                            null);
-
-                } catch (Exception e) {
-                    enviarRespuestaFinal(OpType.INFORMACION, e.getMessage(),
-                            MiMundoConfiguration.instance._msjError,
-                            "desbloquearClave", api.getTimeStamp(), null);
-                }
-                return;
-            } else {
-                try {
+                } else {
                     respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
-                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
-                            respuesta, "ClavePersonal", null, null);
-                } catch (Exception e) {
-                    enviarRespuestaFinal(OpType.INFORMACION, e.getMessage(),
-                            MiMundoConfiguration.instance._msjError,
-                            "DesbloquearClave", api.getTimeStamp(), null);
+                    enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea, respuesta,
+                            "Club", api.getTimeStamp(), null);
+                    
+                    return;
                 }
-                return;
-            }
+                
+            default:
+                // Clave Personal.
+                respuesta = MiMundoConfiguration.instance._menuClave;
+                this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
+                
+                this.miSesion.AddLog(this.msisdn, OpType.INFORMACION, msjMiLinea,
+                        respuesta, "ClavePersonal", null, null);
+                
+                msjMiLinea = this.miSesion.receive();
+                
+                int opcionClave = Integer.parseInt(msjMiLinea);
+                
+                switch (opcionClave) {
+                    case 1:
+                        try {
+                            respuesta = api.obtenerEstadoUsuario(msisdn);
+                            enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
+                                    respuesta, "ObtenerEstadoUsuario",
+                                    api.getTimeStamp(), null);
+
+                        } catch (Exception e) {
+                            enviarRespuestaFinal(OpType.APP_ERROR, e.getMessage(),
+                                    MiMundoConfiguration.instance._msjError,
+                                    "obtenerEstadoUsuario", api.getTimeStamp(), null);
+                        }
+                        return;
+                        
+                    case 2:
+                        respuesta = "Ingrese nueva clave:";
+                        this.miSesion.ResponseMsj(MessageType.CONTINUE, respuesta, true);
+                        this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,
+                                msjMiLinea, respuesta, "ClavePersonal",
+                                api.getTimeStamp(), null);
+
+                        String nuevaClave = this.miSesion.receive();
+
+                        if (nuevaClave.equals("")) {
+                            respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
+                        } else {
+                            try {
+                                respuesta = api.cambiarClave(msisdn, nuevaClave);
+                            } catch (Exception e) {
+                                respuesta = MiMundoConfiguration.instance._msjError;
+                            }
+                        }
+                        enviarRespuestaFinal(OpType.INFORMACION, nuevaClave, respuesta,
+                                "NuevaClave", api.getTimeStamp(), null);
+                        return;
+                        
+                    case 3:
+                        try {
+                            respuesta = api.desbloquearClave(msisdn);
+                            enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
+                                    respuesta, "DesbloquearClave", api.getTimeStamp(),
+                                    null);
+
+                        } catch (Exception e) {
+                            enviarRespuestaFinal(OpType.INFORMACION, e.getMessage(),
+                                    MiMundoConfiguration.instance._msjError,
+                                    "desbloquearClave", api.getTimeStamp(), null);
+                        }
+                        return;
+                        
+                    default:
+                        try {
+                            respuesta = MiMundoConfiguration.instance._msjParamIncorrecto;
+                            enviarRespuestaFinal(OpType.INFORMACION, msjMiLinea,
+                                    respuesta, "ClavePersonal", null, null);
+                        } catch (Exception e) {
+                            enviarRespuestaFinal(OpType.INFORMACION, e.getMessage(),
+                                    MiMundoConfiguration.instance._msjError,
+                                    "DesbloquearClave", api.getTimeStamp(), null);
+                        }
+                        return;
+                }
         }
     }
 
