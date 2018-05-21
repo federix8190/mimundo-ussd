@@ -233,20 +233,22 @@ public class Recarga {
             } else {
                 // se aumenta o disminuye el maximo de transferencias
                 // cambiando el servicio p2p y p2pfull
-                ServicioAdicional servP2P = null;
+                //ServicioAdicional servP2P = null;
+                py.com.personal.webvas.model.ServicioAdicional servP2P = null;
                 try {
-                    servP2P = api.verificaP2P(msisdn);
+                    servP2P = api2.verificaP2P(msisdn);
                 } catch (Exception e) {
                     respuesta = MiMundoConfiguration.instance._msjError;
                     this.miSesion.AddLog(this.msisdn, OpType.APP_ERROR,
                             e.getMessage(), respuesta, "verificaP2P",
-                            api.getTimeStamp(), null);
+                            api2.getTimeStamp(), null);
 
                     this.miSesion.ResponseMsj(MessageType.LAST, respuesta, true);
                     return;
                 }
 
-                if (servP2P.getCodigoServicio().getValue().equals("")) {
+                if (servP2P.getCodigoServicio()//.getValue()
+                        .equals("")) {
                     // Si no tiene p2p se le rechaza.
                     respuesta = MiMundoConfiguration.instance._msjNoPuede;
 
@@ -288,7 +290,7 @@ public class Recarga {
                     String servP2Psugerido = "";
                     String servP2PSugeridoCodigo = "";
                     String topeSugerido = "";
-                    if (servP2P.getCodigoServicio().getValue()
+                    if (servP2P.getCodigoServicio()//.getValue()
                             .equals(MiMundoConfiguration.instance._p2pServ)) {
 
                         servP2Psugerido = MiMundoConfiguration.instance._p2pFullServDes;
@@ -303,7 +305,7 @@ public class Recarga {
 
                     // Se muestra el mensaje de que tiene y que puede tener.
                     respuesta = "Tenes activo el servicio "
-                            + servP2P.getDescripcionServicio().getValue()
+                            + servP2P.getDescripcionServicio()//.getValue()
                             + ".\n1. Cambiar a servicio " + servP2Psugerido
                             + "(transferencia hasta " + topeSugerido
                             + ")\n2. Cancelar";
@@ -352,8 +354,8 @@ public class Recarga {
                             // Se llama a la operacion de activacion.
                             try {
                                 respuesta = api.activarP2P(msisdn, servP2P
-                                        .getCodigoServicio().getValue(),
-                                        servP2PSugeridoCodigo, parametro,
+                                        .getCodigoServicio()//.getValue()
+                                        ,servP2PSugeridoCodigo, parametro,
                                         parametro1);
 
                                 this.miSesion.AddLog(this.msisdn,
@@ -395,11 +397,12 @@ public class Recarga {
                     }
                 }
             }
+            
         } else if (opcionRecarga == 4) {
             // Contra Factrura.
             boolean verificaServ = false;
             try {
-                verificaServ = api.verificaServicio(msisdn,
+                verificaServ = api2.verificaServicio(msisdn,
                         MiMundoConfiguration.instance._contraFactServ);
             } catch (Exception e) {
                 this.miSesion.AddLog(this.msisdn, OpType.INFORMACION,

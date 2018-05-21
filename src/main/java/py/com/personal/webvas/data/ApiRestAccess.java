@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -32,7 +33,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
+import py.com.personal.vas.ObjectFactory;
+import py.com.personal.vas.Service1;
 import py.com.personal.webvas.mimundoussd.MiMundoConfiguration;
+import py.com.personal.webvas.model.ServicioAdicional;
 import py.com.personal.webvas.utils.Constantes;
 
 import static py.com.personal.webvas.utils.Constantes.BASE_PATH_MI_MUNDO_API;
@@ -58,6 +62,59 @@ public class ApiRestAccess {
     // AsigarTiempo.
     private void setTimeStamp(Long valor) {
         _tiemStamp = valor;
+    }
+    
+    public boolean verificaServicio(String Msisdn, String servicio) {
+
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        String token = getToken();
+        boolean resul = false;
+        long startTime = System.currentTimeMillis();
+        String url = "lineas/" + Msisdn + "/verificar-servicio/" + servicio;
+        resul = getBoolean(url, token);
+        setTimeStamp(System.currentTimeMillis() - startTime);
+        return resul;
+    }
+    
+    public ServicioAdicional verificaP2P(String Msisdn) {
+        
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        String token = getToken();
+        long startTime = System.currentTimeMillis();
+        String url = "lineas/" + Msisdn + "/verificar-servicio/" 
+                + MiMundoConfiguration.instance._p2pServ;
+        JSONObject response = getDatos(url, token);
+        
+        String codigoServicio = (String) response.get("codigoServicio");
+        if (codigoServicio == null || codigoServicio.equals("")) {
+            url = "lineas/" + Msisdn + "/verificar-servicio/" 
+                + MiMundoConfiguration.instance._p2pFullServ;
+            response = getDatos(url, token);
+        }
+        
+        setTimeStamp(System.currentTimeMillis() - startTime);
+        
+        String descripcionServicio = (String) response.get("descripcionServicio");
+        Date fechaActivacion = (Date) response.get("fechaActivacion");
+        
+        ServicioAdicional resul = new ServicioAdicional();
+        resul.setCodigoServicio(codigoServicio);
+        resul.setDescripcionServicio(descripcionServicio);
+        resul.setFechaActivacion(fechaActivacion);
+        
+        return resul;
+    }
+    
+    // Obtiene los montos para recargar saldo.
+    public String obtenerMontos(String Msisdn) {
+        // Obtener codigo de cliente de la linea
+        Msisdn = formatLineaMiMundoApi(Msisdn);
+        long startTime = System.currentTimeMillis();
+        String token = getToken();
+        String url = "lineas/" + Msisdn;
+        JSONObject datosLinea = getDatos(url, token);
+        Long codigoCliente = getLong(datosLinea, "codigoCliente");
+        setTimeStamp(System.currentTimeMillis() - startTime);
     }
     
     public String misDatos(String Msisdn) {
@@ -251,6 +308,48 @@ public class ApiRestAccess {
             JSONObject obj = (JSONObject) parser.parse(str);
             
             return obj;
+            
+        } catch (Exception e) {
+            System.out.println("Ocurrio un error : " + e.getMessage());
+            return null;
+        } finally {
+            try {
+                if (is != null) is.close(); 
+            } catch (Exception e) {
+                System.out.println("Error al cerrar InputStream : " + e.getMessage());
+            }
+        }
+    }
+    
+    private Boolean getBoolean(String url, String token) {
+        
+        InputStream is = null;
+                
+        try {
+            
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpHost host = new HttpHost(URL_MI_MUNDO_API, PORT_MI_MUNDO_API);
+            String urlServicio = BASE_PATH_MI_MUNDO_API + url;
+            
+            HttpEntityEnclosingRequest request;
+            request = new BasicHttpEntityEnclosingRequest("GET", urlServicio);
+            request.setHeader("Authorization", token);
+            request.setHeader("client_id", CLIENT_ID_SERVICE1);
+            
+            HttpResponse res = client.execute(host, request);
+            HttpEntity entityResponse = res.getEntity();
+            is = entityResponse.getContent();
+            StringWriter writer = new StringWriter();
+            IOUtils.copy(is, writer);
+            String str = writer.toString();
+            
+            if (str.equals("false")) {
+                return false;
+            } else if (str.equals("true")) {
+                return true;
+            } else {
+                return null;
+            }
             
         } catch (Exception e) {
             System.out.println("Ocurrio un error : " + e.getMessage());
